@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Teacher Attendance Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#111;
+    color:white;
+    text-align:center;
+}
+
+table{
+    margin:auto;
+    margin-top:20px;
+    border-collapse:collapse;
+    width:60%;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #444;
+}
+
+th{
+    background:#222;
+}
+
+.stats{
+    margin-top:20px;
+    font-size:18px;
+}
+
+input{
+    padding:8px;
+    font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>AI Attendance System</h1>
+<h2>Teacher Dashboard</h2>
+
+<label>Select Date:</label>
+<input type="date" id="datePicker">
+
+<div class="stats">
+
+<p>Total Students: <span id="totalStudents">20</span></p>
+<p>Present: <span id="presentCount">0</span></p>
+<p>Absent: <span id="absentCount">0</span></p>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Time</th>
+<th>Confidence</th>
+</tr>
+</thead>
+
+<tbody id="attendanceTable"></tbody>
+
+</table>
+
+<script>
+
+const firebaseConfig = {
+    databaseURL: "https://attendance-pi-38ffd-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const totalStudents = 20;
+document.getElementById("totalStudents").innerText = totalStudents;
+
+const datePicker = document.getElementById("datePicker");
+datePicker.valueAsDate = new Date();
+
+datePicker.addEventListener("change", loadAttendance);
+
+function loadAttendance(){
+
+    const date = datePicker.value;
+    const table = document.getElementById("attendanceTable");
+
+    table.innerHTML = "";
+
+    let present = new Set();
+
+    firebase.database().ref("attendance/"+date).once("value", snapshot => {
+
+        snapshot.forEach(child => {
+
+            const name = child.key;
+            const data = child.val();
+
+            present.add(name);
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${data.timestamp}</td>
+                <td>${Number(data.confidence).toFixed(3)}</td>
+            `;
+
+            table.appendChild(row);
+
+        });
+
+        document.getElementById("presentCount").innerText = present.size;
+        document.getElementById("absentCount").innerText = totalStudents - present.size;
+
+    });
+
+}
+
+loadAttendance();
+
+</script>
+
+</body>
+
+</html>
